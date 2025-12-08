@@ -1,0 +1,209 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+}
+
+/* ============================
+   ENUMS
+   ============================ */
+
+enum UserRole {
+  student
+  professor
+}
+
+enum Semester {
+  autumn
+  spring
+  summer
+}
+
+enum StaffRole {
+  lecturer
+  assistant
+  lab
+  other
+}
+
+enum FileType {
+  video
+  document
+  archive
+  image
+  other
+}
+
+/* ============================
+   MODELS
+   ============================ */
+
+model User {
+  id           Int       @id @default(autoincrement())
+  name         String
+  email        String    @unique
+  passwordHash String
+  role         UserRole
+  createdAt    DateTime  @default(now())
+
+  // relații
+  createdProjects      Project[]          @relation("CreatedProjects")
+  projectMemberships   ProjectMember[]
+  staffCourseOfferings CourseStaff[]
+  juryAssignments      JuryAssignment[]
+  grades               Grade[]
+  courseOfferingsMain  CourseOffering[]   @relation("MainProfessor")
+  groupMemberships     GroupMember[]
+}
+
+model Course {
+  id          Int              @id @default(autoincrement())
+  code        String           @unique
+  name        String
+  description String?
+  offerings   CourseOffering[]
+}
+
+model CourseOffering {
+  id              Int       @id @default(autoincrement())
+  courseId        Int
+  academicYear    String
+  semester        Semester
+  mainProfessorId Int
+  createdAt       DateTime  @default(now())
+
+  course        Course @relation(fields: [courseId], references: [id])
+  mainProfessor User   @relation("MainProfessor", fields: [mainProfessorId], references: [id])
+
+  staff    CourseStaff[]
+  groups   Group[]
+  projects Project[]
+}
+
+model CourseStaff {
+  courseOfferingId Int
+  userId           Int
+  role             StaffRole @default(other)
+
+  courseOffering CourseOffering @relation(fields: [courseOfferingId], references: [id])
+  user           User           @relation(fields: [userId], references: [id])
+
+  @@id([courseOfferingId, userId])
+}
+
+model Group {
+  id               Int       @id @default(autoincrement())
+  courseOfferingId Int
+  name             String
+  description      String?
+
+  courseOffering CourseOffering @relation(fields: [courseOfferingId], references: [id])
+  members        GroupMember[]
+  projects       Project[]
+}
+
+model GroupMember {
+  groupId Int
+  userId  Int
+
+  group Group @relation(fields: [groupId], references: [id])
+  user  User  @relation(fields: [userId], references: [id])
+
+  @@id([groupId, userId])
+}
+
+model Project {
+  id               Int       @id @default(autoincrement())
+  title            String
+  description      String?
+  createdById      Int
+  courseOfferingId Int?
+  groupId          Int?
+  createdAt        DateTime  @default(now())
+
+  createdBy      User           @relation("CreatedProjects", fields: [createdById], references: [id])
+  courseOffering CourseOffering? @relation(fields: [courseOfferingId], references: [id])
+  group          Group?         @relation(fields: [groupId], references: [id])
+
+  members      ProjectMember[]
+  deliverables Deliverable[]
+  finalGrades  ProjectFinalGrade[]
+}
+
+model ProjectMember {
+  projectId Int
+  userId    Int
+  isLeader  Boolean @default(false)
+
+  project Project @relation(fields: [projectId], references: [id])
+  user    User    @relation(fields: [userId], references: [id])
+
+  @@id([projectId, userId])
+}
+
+model Deliverable {
+  id          Int       @id @default(autoincrement())
+  projectId   Int
+  title       String
+  description String?
+  dueDate     DateTime
+  videoUrl    String?
+  serverUrl   String?
+  createdAt   DateTime  @default(now())
+
+  project         Project          @relation(fields: [projectId], references: [id])
+  files           DeliverableFile[]
+  juryAssignments JuryAssignment[]
+  grades          Grade[]
+  finalGrades     ProjectFinalGrade[]
+}
+
+model DeliverableFile {
+  id            Int       @id @default(autoincrement())
+  deliverableId Int
+  fileName      String
+  filePath      String?
+  fileUrl       String?
+  fileType      FileType  @default(other)
+  isPrimary     Boolean   @default(false)
+  uploadedAt    DateTime  @default(now())
+
+  deliverable Deliverable @relation(fields: [deliverableId], references: [id])
+}
+
+model JuryAssignment {
+  id            Int       @id @default(autoincrement())
+  deliverableId Int
+  jurorId       Int
+  assignedAt    DateTime  @default(now())
+
+  deliverable Deliverable @relation(fields: [deliverableId], references: [id])
+  juror       User        @relation(fields: [jurorId], references: [id])
+
+  @@unique([deliverableId, jurorId])
+}
+
+model Grade {
+  id            Int       @id @default(autoincrement())
+  deliverableId Int
+  jurorId       Int
+  score         Decimal   @db.Decimal(4, 2)
+  comment       String?
+  createdAt     DateTime  @default(now())
+
+  deliverable Deliverable @relation(fields: [deliverableId], references: [id])
+  juror       User        @relation(fields: [jurorId], references: [id])
+}
+
+model ProjectFinalGrade {
+  id            Int       @id @default(autoincrement())
+  projectId     Int
+  deliverableId Int?
+  finalScore    Decimal   @db.Decimal(4, 2)
+  calculatedAt  DateTime  @default(now())
+
+  project     Project     @relation(fields: [projectId], references: [id])
+  deliverable Deliverable? @relation(fields: [deliverableId], references: [id])
+}
