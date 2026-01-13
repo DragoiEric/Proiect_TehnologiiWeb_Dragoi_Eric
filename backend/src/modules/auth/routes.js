@@ -1,6 +1,7 @@
 const express = require('express');
 const { AuthController } = require('./controller'); 
-const { requireAuth } = require('../../middleware/auth');
+const { requireAuth, requireProfessor } = require('../../middleware/auth');
+
 
 const router = express.Router();
 const authController = new AuthController();
@@ -13,5 +14,8 @@ router.post('/register-professor', (req, res) => authController.registerProfesso
 router.post('/login', (req, res) => authController.login(req, res));
 // profil utilizator
 router.get('/me', requireAuth, (req, res) => authController.getMe(req, res));
+router.get("/professors", requireAuth, requireProfessor, (req, res) =>
+  authController.getProfessors(req, res)
+);
 
 module.exports = router;

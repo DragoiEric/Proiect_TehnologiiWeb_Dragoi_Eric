@@ -10,28 +10,33 @@ function requireProfessor(req, res, next) {
 
 // middleware autentificare cu token JWT
 function requireAuth(req, res, next) {
-    const authHeader = req.headers['authorization'] || req.headers['Authorization'];
+  const authHeader = req.headers['authorization'] || req.headers['Authorization'];
 
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-        return res.status(401).json({ error: 'Autentificare necesară' });
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({ error: 'Autentificare necesară' });
+  }
+
+  const token = authHeader.slice('Bearer '.length);
+
+  try {
+    const payload = jwt.verify(token, process.env.JWT_SECRET);
+
+    const id = payload.userId ?? payload.id; // <- IMPORTANT
+    if (!id) {
+      return res.status(401).json({ error: 'Token valid dar fără user id' });
     }
 
-    const token = authHeader.substring('Bearer '.length);
+    req.user = {
+      id,
+      role: payload.role,
+    };
 
-    try {
-        const payload = jwt.verify(token, process.env.JWT_SECRET);
-
-        // atasare info user in request pe baza payload
-        req.user = {
-            id: payload.userId,
-            role: payload.role,
-        };
-
-        next();
-    } catch (err) {
-        console.error('JWT verify error:', err);
-        return res.status(401).json({ error: 'Token invalid sau expirat' });
-    }
+    return next();
+  } catch (err) {
+    console.error('JWT verify error:', err);
+    return res.status(401).json({ error: 'Token invalid sau expirat' });
+  }
 }
+
 
 module.exports = { requireProfessor, requireAuth };

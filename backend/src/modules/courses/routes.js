@@ -38,6 +38,7 @@ router.post(
 // lista offerings pentru course
 router.get(
     '/:courseId/offerings',
+    requireAuth,
     requireProfessor,
     (req, res) => controller.getOfferingsForCourse(req, res)
 );
@@ -56,5 +57,20 @@ router.post(
     requireProfessor,
     (req, res) => controller.addStaffToOffering(req, res)
 );
+
+router.get(
+    '/offerings/teacher/:mainProfessorId',
+    requireAuth,
+    requireProfessor,
+    (req, res) => controller.getCourseOfferingByTeacher(req, res)
+);
+
+router.delete(
+  "/offerings/:offeringId",
+  requireAuth,
+  requireProfessor,
+  (req, res) => controller.deleteOffering(req, res)
+);
+
 
 module.exports = router;

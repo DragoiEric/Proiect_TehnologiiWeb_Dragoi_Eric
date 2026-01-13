@@ -142,6 +142,7 @@ class GroupsService {
             throw new Error('Link not found');
         }
     }
+
 }
 
 module.exports = { GroupsService };

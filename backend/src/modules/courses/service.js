@@ -2,6 +2,9 @@ const Course = require('../../models/Course');
 const CourseOffering = require('../../models/CourseOffering');
 const CourseStaff = require('../../models/CourseStaff');
 const User = require('../../models/User');
+const { sequelize } = require("../../core/db");
+const Project = require('../../models/Project');
+
 
 class CoursesService {
     // creare course nou
@@ -154,6 +157,63 @@ class CoursesService {
         });
 
         return entry;
+    }
+
+    async getCourseOfferingsByTeacher(id){
+
+        
+        
+        const courseOfferings = await CourseOffering.findAll({
+            where: {mainProfessorId: id}
+        })
+
+        return courseOfferings;
+        
+    }
+
+    async deleteOfferingCascade({ offeringId, requester }) {
+        return CourseOffering.sequelize.transaction(async (t) => {
+            const offering = await CourseOffering.findByPk(offeringId, { transaction: t });
+
+            if (!offering) {
+            throw new Error("NOT_FOUND");
+            }
+
+            // Optional permission check:
+            // allow admins OR the main professor who owns it
+            const role = String(requester?.role || "").toLowerCase();
+            const isAdmin = role === "admin";
+            const isOwner = Number(offering.mainProfessorId) === Number(requester?.id);
+
+            if (!isAdmin && !isOwner) {
+            throw new Error("FORBIDDEN");
+            }
+
+            // 1) delete CourseStaff for this offering
+            const deletedStaffCount = await CourseStaff.destroy({
+            where: { courseOfferingId: offeringId },
+            transaction: t,
+            });
+
+            // 2) delete Projects for this offering
+            const deletedProjectsCount = await Project.destroy({
+            where: { courseOfferingId: offeringId },
+            transaction: t,
+            });
+
+            // 3) delete the offering itself
+            await CourseOffering.destroy({
+            where: { id: offeringId },
+            transaction: t,
+            });
+
+            return {
+            ok: true,
+            offeringId,
+            deletedProjectsCount,
+            deletedStaffCount,
+            };
+        });
     }
 }
 

@@ -120,6 +120,7 @@ class GroupsController {
             res.status(500).json({ error: 'Eroare la stergerea legaturii dintre grupa si course offering' });
         }
     }
+
 }
 
 module.exports = { GroupsController };

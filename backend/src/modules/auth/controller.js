@@ -1,6 +1,7 @@
 const { AuthService } = require('./service');   
 
 const authService = new AuthService();
+const User = require('../../models/User');
 
 class AuthController {
 
@@ -87,6 +88,17 @@ class AuthController {
             res.status(500).json({ error: 'Eroare la preluarea profilului' });
         }
     }
+
+    async getProfessors(req, res) {
+        try {
+            const professors = await authService.getProfessors();
+            return res.json(professors);
+        } catch (err) {
+            console.error(err);
+            return res.status(500).json({ error: "Failed to fetch professors" });
+        }
+    }
+
 }
 
 module.exports = { AuthController };

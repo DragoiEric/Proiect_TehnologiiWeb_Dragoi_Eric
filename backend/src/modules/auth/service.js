@@ -62,6 +62,17 @@ class AuthService {
 
         return { token, user: plainUser };
     }
+
+    async getProfessors() {
+    return User.findAll({
+        where: { role: "professor" }, // must match exactly what you store in DB
+        attributes: ["id", "name", "email", "role"], // exclude passwordHash by not selecting it
+        order: [["name", "ASC"]],
+    });
+    }
+
+
+
 }
 
 module.exports = { AuthService };

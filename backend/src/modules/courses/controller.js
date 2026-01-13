@@ -133,6 +133,44 @@ class CoursesController {
             res.status(500).json({ error: 'Eroare la adăugarea staff-ului' });
         }
     }
+
+    async getCourseOfferingByTeacher(req, res){
+        const { mainProfessorId } = req.params;
+
+
+        try{
+            const offerings = await coursesService.getCourseOfferingsByTeacher(mainProfessorId);
+            res.json(offerings);
+        }catch(err){
+            console.error(err);
+            return res.status(500).json({error: 'Eroare la gasirea cursurilor'});
+        }
+    }
+
+    async deleteOffering(req, res) {
+        try {
+            const offeringId = Number(req.params.offeringId);
+            if (!Number.isInteger(offeringId) || offeringId <= 0) {
+            return res.status(400).json({ error: "Invalid offeringId" });
+            }
+
+            const result = await coursesService.deleteOfferingCascade({
+            offeringId,
+            requester: req.user, // { id, role }
+            });
+
+            return res.json(result);
+        } catch (err) {
+            console.error(err);
+            if (err.message === "NOT_FOUND") {
+            return res.status(404).json({ error: "Course offering not found" });
+            }
+            if (err.message === "FORBIDDEN") {
+            return res.status(403).json({ error: "Forbidden" });
+            }
+            return res.status(500).json({ error: "Failed to delete offering" });
+        }
+    }
 }
 
 module.exports = { CoursesController };

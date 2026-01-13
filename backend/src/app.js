@@ -1,5 +1,6 @@
 const express = require('express');
 require('dotenv').config();
+const cors = require('cors');
 
 const { sequelize } = require('./models');
 const authRouter = require('./modules/auth/routes');
@@ -13,7 +14,9 @@ const reportsRouter = require('./modules/reports/routes');
 
 const app = express();
 app.use(express.json());
-
+app.use(cors({
+  origin: 'http://localhost:5173'
+}));
 app.use('/auth', authRouter);
 app.use('/courses', coursesRouter);
 app.use('/groups', groupsRouter);
@@ -31,7 +34,7 @@ const PORT = process.env.PORT || 3000;
         console.log('DB connected');
 
         // sincronizare modele cu baza de date
-        await sequelize.sync({ force: true });
+        await sequelize.sync();
 
         app.listen(PORT, () => {
             console.log(`Server running on port ${PORT}`);
