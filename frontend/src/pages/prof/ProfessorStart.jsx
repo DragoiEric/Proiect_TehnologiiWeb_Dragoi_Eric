@@ -100,9 +100,11 @@ export default function ProfessorStart() {
           <button className="prof-btn secondary" onClick={handleLogout}>
             Logout
           </button>
-          <div style={{ display: "flex", gap: 10 }}>
+          <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
             <Link className="prof-btn secondary" to="/prof/courses">Manage Courses</Link>
+            <Link className="prof-btn secondary" to="/prof/groups">Manage Groups</Link>
           </div>
+
         </div>
 
         {offerings.length === 0 ? (
@@ -120,11 +122,13 @@ export default function ProfessorStart() {
               return (
                 <div key={o.id} className="offering">
                   <div className="offering-title">{courseName}</div>
-                  <div className="offering-meta">
+                  <div className="offering-meta" style={{ marginBottom: "20px" }}>
                     <span>Offering ID: {o.id}</span>
                     {o.year != null && <span>• Year: {o.year}</span>}
                     {o.semester != null && <span>• Semester: {o.semester}</span>}
                   </div>
+                  <Link className="prof-btn" to={`/prof/offerings/${o.id}`} style={{ marginTop: "50px" }}>Open</Link>
+
 
                   {/* Pentru mai târziu: buton de detalii */}
                   {/* <button className="prof-btn small" onClick={() => navigate(`/prof/offerings/${o.id}`)}>Open</button> */}

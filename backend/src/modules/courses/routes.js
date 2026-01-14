@@ -20,6 +20,12 @@ router.get(
     (req, res) => controller.getAllCourses(req, res)
 );
 
+router.get(
+  "/offerings/my",
+  requireAuth,
+  (req, res) => controller.getMyOfferings(req, res)
+);
+
 // detalii course cu offerings
 router.get(
     '/:id',
@@ -71,6 +77,10 @@ router.delete(
   requireProfessor,
   (req, res) => controller.deleteOffering(req, res)
 );
+
+
+
+
 
 
 module.exports = router;

@@ -20,6 +20,13 @@ router.get(
     (req, res) => controller.getDeliverablesForProject(req, res)
 );
 
+router.patch(
+  "/:id",
+  requireAuth,
+  (req, res) => controller.updateDeliverable(req, res)
+);
+
+
 // detalii deliverable
 router.get(
     '/:id',

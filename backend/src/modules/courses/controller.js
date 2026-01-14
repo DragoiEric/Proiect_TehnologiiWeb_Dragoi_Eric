@@ -171,6 +171,19 @@ class CoursesController {
             return res.status(500).json({ error: "Failed to delete offering" });
         }
     }
+
+    async getMyOfferings(req, res) {
+  try {
+    const data = await coursesService.getOfferingsForStudent(req.user.id);
+    res.json(data);
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: e.message });
+  }
+}
+
+
+
 }
 
 module.exports = { CoursesController };

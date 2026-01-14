@@ -5,32 +5,27 @@ const deliverablesService = new DeliverablesService();
 class DeliverablesController {
     // creare deliverable pentru proiect
     async createDeliverable(req, res) {
-        const { projectId } = req.params;
-        const { title, description, dueDate, videoUrl, serverUrl } = req.body;
+  try {
+    const projectId = Number(req.params.projectId);
+    const { title, description, dueDate, videoUrl, serverUrl, juryCount } = req.body || {};
 
-        if (!title || !dueDate) {
-            return res.status(400).json({ error: 'title si dueDate sunt obligatorii' });
-        }
+    const result = await deliverablesService.createDeliverable(
+      projectId,
+      title,
+      description,
+      dueDate,
+      videoUrl,
+      serverUrl,
+      juryCount ?? 10
+    );
 
-        try {
-            const deliverable = await deliverablesService.createDeliverable(
-                projectId,
-                title,
-                description,
-                dueDate,
-                videoUrl,
-                serverUrl
-            );
+    return res.status(201).json(result);
+  } catch (err) {
+    console.error(err);
+    return res.status(400).json({ error: err.message || "Bad request" });
+  }
+}
 
-            res.status(201).json(deliverable);
-        } catch (err) {
-            console.error(err);
-            if (['Project not found'].includes(err.message)) {
-                return res.status(400).json({ error: err.message });
-            }
-            res.status(500).json({ error: 'Eroare la crearea deliverable' });
-        }
-    }
 
     // toate deliverable pentru un proiect
     async getDeliverablesForProject(req, res) {
@@ -108,6 +103,32 @@ class DeliverablesController {
             res.status(500).json({ error: 'Eroare la preluarea fisierelor' });
         }
     }
+
+    async updateDeliverable(req, res) {
+  try {
+    const deliverableId = Number(req.params.id);
+    const patch = req.body || {};
+
+    const updated = await deliverablesService.updateDeliverable({
+      deliverableId,
+      requester: req.user,
+      patch,
+    });
+
+    return res.status(200).json(updated);
+  } catch (err) {
+    console.error(err);
+
+    if (String(err.message) === "NOT_FOUND") {
+      return res.status(404).json({ error: "Deliverable not found" });
+    }
+    if (String(err.message) === "FORBIDDEN") {
+      return res.status(403).json({ error: "Forbidden" });
+    }
+    return res.status(400).json({ error: err.message || "Bad request" });
+  }
+}
+
 }
 
 module.exports = { DeliverablesController };

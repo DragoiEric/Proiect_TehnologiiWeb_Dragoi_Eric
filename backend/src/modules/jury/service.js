@@ -6,70 +6,64 @@ const ProjectMember = require('../../models/ProjectMember');
 const User = require('../../models/User');
 
 class JuryService {
-    // creez assignments random pentru un deliverable
+    // assignments random pentru un deliverable
     async assignRandomJurors(deliverableId, count) {
-        const deliverable = await Deliverable.findByPk(deliverableId);
-        if (!deliverable) {
-            throw new Error('Deliverable not found');
-        }
+  const deliverable = await Deliverable.findByPk(deliverableId);
+  if (!deliverable) throw new Error("Deliverable not found");
 
-        const project = await Project.findByPk(deliverable.projectId);
-        if (!project) {
-            throw new Error('Project not found');
-        }
+  const project = await Project.findByPk(deliverable.projectId);
+  if (!project) throw new Error("Project not found");
 
-        // iau membrii proiectului
-        const members = await ProjectMember.findAll({
-            where: { projectId: project.id }
-        });
-        const memberIds = members.map(m => m.userId);
+  const members = await ProjectMember.findAll({ where: { projectId: project.id } });
+  const memberIds = members.map((m) => m.userId);
 
-        // iau jurorii deja asignati
-        const existingAssignments = await JuryAssignment.findAll({
-            where: { deliverableId }
-        });
-        const alreadyAssignedIds = existingAssignments.map(a => a.jurorId);
+  const existingAssignments = await JuryAssignment.findAll({ where: { deliverableId } });
+  const alreadyAssignedIds = existingAssignments.map((a) => a.jurorId);
 
-        const excludedIds = [...new Set([...memberIds, ...alreadyAssignedIds])];
+  const excludedIds = [...new Set([...memberIds, ...alreadyAssignedIds])];
 
-        // iau studenti eligibili
-        const eligibleStudents = await User.findAll({
-            where: {
-                role: 'student',
-                id: excludedIds.length > 0
-                    ? { [Op.notIn]: excludedIds }
-                    : { [Op.ne]: null }
-            }
-        });
+  const groupId = project.groupId;
+  if (!groupId) throw new Error("Project has no groupId");
 
-        if (eligibleStudents.length === 0) {
-            throw new Error('No eligible jurors available');
-        }
+  const sameGroupMembers = await GroupMember.findAll({ where: { groupId } });
+  const sameGroupIds = sameGroupMembers.map((gm) => gm.userId);
 
-        const finalCount = Math.min(count, eligibleStudents.length);
+  const excludeAll = [...new Set([...excludedIds, ...sameGroupIds])];
 
-        // aleg random jurori
-        const shuffled = [...eligibleStudents];
-        for (let i = shuffled.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            const tmp = shuffled[i];
-            shuffled[i] = shuffled[j];
-            shuffled[j] = tmp;
-        }
+  const eligibleStudents = await User.findAll({
+    where: {
+      role: "student",
+      id: excludeAll.length > 0 ? { [Op.notIn]: excludeAll } : { [Op.ne]: null },
+    },
+  });
 
-        const selected = shuffled.slice(0, finalCount);
+  if (eligibleStudents.length === 0) throw new Error("No eligible jurors available");
 
-        const created = [];
-        for (const student of selected) {
-            const assignment = await JuryAssignment.create({
-                deliverableId,
-                jurorId: student.id
-            });
-            created.push(assignment);
-        }
+  const finalCount = Math.min(Number(count) || 10, eligibleStudents.length);
 
-        return created;
-    }
+  const shuffled = [...eligibleStudents];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    const tmp = shuffled[i];
+    shuffled[i] = shuffled[j];
+    shuffled[j] = tmp;
+  }
+
+  const selected = shuffled.slice(0, finalCount);
+
+  const created = [];
+  for (const student of selected) {
+    const assignment = await JuryAssignment.create({
+      deliverableId,
+      jurorId: student.id,
+      grade: null,
+    });
+    created.push(assignment);
+  }
+
+  return created;
+}
+
 
     // iau assignments pentru un deliverable
     async getAssignmentsForDeliverable(deliverableId) {

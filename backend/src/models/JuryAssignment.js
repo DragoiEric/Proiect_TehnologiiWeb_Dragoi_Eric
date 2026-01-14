@@ -1,8 +1,8 @@
-const { DataTypes } = require('sequelize');
-const sequelize = require('../core/db');
+const { DataTypes } = require("sequelize");
+const sequelize = require("../core/db");
 
 const JuryAssignment = sequelize.define(
-  'JuryAssignment',
+  "JuryAssignment",
   {
     id: {
       type: DataTypes.INTEGER,
@@ -17,6 +17,11 @@ const JuryAssignment = sequelize.define(
       type: DataTypes.INTEGER,
       allowNull: false,
     },
+    grade: {
+      type: DataTypes.DECIMAL(4, 2),
+      allowNull: true,
+      defaultValue: null,
+    },
     assignedAt: {
       type: DataTypes.DATE,
       allowNull: false,
@@ -24,13 +29,13 @@ const JuryAssignment = sequelize.define(
     },
   },
   {
-    tableName: 'JuryAssignment',
+    tableName: "JuryAssignment",
     freezeTableName: true,
     timestamps: false,
     indexes: [
       {
         unique: true,
-        fields: ['deliverableId', 'jurorId'],
+        fields: ["deliverableId", "jurorId"],
       },
     ],
   }

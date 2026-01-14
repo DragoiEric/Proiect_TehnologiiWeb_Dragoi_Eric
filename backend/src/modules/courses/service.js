@@ -4,6 +4,8 @@ const CourseStaff = require('../../models/CourseStaff');
 const User = require('../../models/User');
 const { sequelize } = require("../../core/db");
 const Project = require('../../models/Project');
+const GroupMember = require("../../models/GroupMember");
+const GroupCourseOffering = require("../../models/GroupCourseOffering");
 
 
 class CoursesService {
@@ -215,6 +217,40 @@ class CoursesService {
             };
         });
     }
+
+    async getOfferingsForStudent(userId) {
+  const uid = Number(userId);
+  if (!Number.isInteger(uid) || uid <= 0) throw new Error("Invalid userId");
+
+  const memberships = await GroupMember.findAll({
+    where: { userId: uid },
+    attributes: ["groupId"],
+    raw: true,
+  });
+
+  const groupIds = [...new Set(memberships.map((m) => Number(m.groupId)).filter(Boolean))];
+  if (groupIds.length === 0) return [];
+
+  const links = await GroupCourseOffering.findAll({
+    where: { groupId: groupIds },
+    attributes: ["courseOfferingId", "groupId"],
+    raw: true,
+  });
+
+  const offeringIds = [...new Set(links.map((l) => Number(l.courseOfferingId)).filter(Boolean))];
+  if (offeringIds.length === 0) return [];
+
+  const offerings = await CourseOffering.findAll({
+    where: { id: offeringIds },
+    order: [["academicYear", "DESC"], ["semester", "ASC"]],
+    raw: true,
+  });
+
+  return offerings;
+}
+
+
+    
 }
 
 module.exports = { CoursesService };

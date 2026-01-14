@@ -1,8 +1,8 @@
-const { DataTypes } = require('sequelize');
-const sequelize = require('../core/db');
+const { DataTypes } = require("sequelize");
+const sequelize = require("../core/db");
 
 const ProjectFinalGrade = sequelize.define(
-  'ProjectFinalGrade',
+  "ProjectFinalGrade",
   {
     id: {
       type: DataTypes.INTEGER,
@@ -19,16 +19,15 @@ const ProjectFinalGrade = sequelize.define(
     },
     finalScore: {
       type: DataTypes.DECIMAL(4, 2),
-      allowNull: false,
+      allowNull: true,
     },
     calculatedAt: {
       type: DataTypes.DATE,
-      allowNull: false,
-      defaultValue: DataTypes.NOW,
+      allowNull: true,
     },
   },
   {
-    tableName: 'ProjectFinalGrade',
+    tableName: "ProjectFinalGrade",
     freezeTableName: true,
     timestamps: false,
   }
